@@ -86,7 +86,8 @@
       p += 7 + Math.random() * 12; bar.style.width = Math.min(100, p) + '%'; ld.textContent = msgs[Math.min(2, p / 35 | 0)];
       if (p >= 100) { clearInterval(iv); $('.loadbar', el).style.display = 'none'; $('#cta', el).style.opacity = 1; }
     }, 110);
-    on(el, '#new', 'click', () => { if (has && !confirm('Purana safar mit jaayega. Naya shuru karein?')) return; G.wipe(); G.sfx.whoosh(); prologue(); });
+    let armed = false;
+    on(el, '#new', 'click', (e, b) => { if (has && !armed) { armed = true; b.innerHTML = ic('alert') + ' Purana safar mitega. Phir tap karo'; return; } G.wipe(); G.sfx.whoosh(); prologue(); });
     on(el, '#cont', 'click', () => { G.sfx.dhol(); home(); });
     on(el, '#set', 'click', settingsSheet);
   }
@@ -311,8 +312,9 @@
     }
     render();
     on(el, '#bk', 'click', home);
+    const b0 = el.querySelector('#go');
     on(el, '#go', 'click', () => {
-      if (used() < max && !confirm(`${max - used()} Samay khaali hai. Phir bhi hafta chalayein?`)) return;
+      if (used() < max && !b0.armed) { b0.armed = true; b0.innerHTML = `${ic('alert')} ${max - used()} Samay khaali. Phir tap karo`; return; }
       S.samayDebt = 0;
       const out = G.resolveTurn(plan); G.sfx.whoosh();
       runEvents(G.drawEvents(), out, 0);
