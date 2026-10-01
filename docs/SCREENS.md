@@ -41,4 +41,19 @@ remembers grudges, campaigns harder in election weeks), School Committee electio
 segment softmax engine with NOTA and turnout from Josh, PA aide card reward, 6-goal stage
 checklist, party choice → Booth Adhyaksh. Autosave in localStorage.
 
-Next: Stage 2 (booth voter list, Panna Pramukh), Gram Sabha mini-game, polling-day booth mini-game.
+## Stage 2: Booth Adhyaksh (GDD §4)
+| Screen | What it shows | File |
+| --- | --- | --- |
+| Booth home | Party-vote forecast gauge (last 36% → target 46%), high-command order with deadline, 40-page Panna Pramukh grid by tola with coverage %, voter-list status, committee balance (tola counts, women ≥ 1/3, size /20), worker loyalty, missions, stage checklist | `screens/s2-booth-home.png`, `s2-booth-grid.png`, `s2-booth-committee.png` |
+| Page sheet | Assign a worker to a page (max 2 each; same-tola worker counts fully, other tola at 60%) | `screens/s2-page-sheet.png` |
+| Planner | Stage-2 cards: Matdata Suchi Camp, Karyakarta Bharti, Booth Committee Baithak, Party ka Aadesh | `screens/s2-planner2.png` |
+| Election announce / counting / breakdown | Vidhan Sabha (party vote at your booth), Ward Panch (you vs Bunty), by-election retry | `screens/s2-announce2.png`, `s2-counting2.png`, `s2-breakdown2.png` |
+| Stage end | Rank, booth lift, voters enrolled, orders done; Stage 3 teaser | `screens/s2-stage2-end.png` |
+
+Systems: voter list closes after 7 weeks (missing/deleted names per page, Form 7 event); unbalanced committee bleeds
+support every week; neglected workers lose loyalty and quit; Bunty (now the rival party's booth agent) targets your
+least-covered tola and poaches workers; party orders raise or cut Party Vishwas. Goals: +10 party vote, 50 voters enrolled,
+survive poaching, Ward Panch (optional). Missing +10 triggers one by-election.
+Balance (200 simulated runs each): a player who fills pages reaches +10 about 60% of the time; one who ignores pages gets about 0.
+
+Next: Stage 3 (Gram Pradhan, Gram Sabha mini-game), polling-day booth mini-game.

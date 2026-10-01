@@ -47,6 +47,11 @@
     if (fx.samay) out.push(`<span class="fxp neu">${ic('clock')}${fx.samay} Samay</span>`);
     if (fx.heat) out.push(`<span class="fxp risk">${ic('thermo')}Jokhim</span>`);
     if (fx.grudge) out.push(`<span class="fxp neu">${ic('eye')}Bunty yaad rakhega</span>`);
+    if (fx.pv) Object.entries(fx.pv).forEach(([t, v]) => P(v, 'Party vote ' + G.tolaName(t).split(' ')[0], 'flag'));
+    if (fx.enrol || fx.restore) out.push(`<span class="fxp pos">${ic('book')}Naye matdata</span>`);
+    if (fx.women) out.push(`<span class="fxp pos">${ic('users')}+${fx.women} mahila karyakarta</span>`);
+    if (fx.poach === 'lose') out.push(`<span class="fxp neg">${ic('users')}3 karyakarta jaayenge</span>`);
+    if (fx.poach && fx.poach !== 'lose') out.push(`<span class="fxp pos">${ic('shield')}Karyakarta bachenge</span>`);
     if (fx.solve) out.push(`<span class="fxp pos">${ic('check')}Samasya hal</span>`);
     if (fx.seed) out.push(`<span class="fxp risk">${ic('alert')}Baad mein asar?</span>`);
     return out.join('');
@@ -197,7 +202,7 @@
       <div class="ticker"><b>${ic('tv', 'sm')}KHABAR</b><div class="tk"><span>${ticker}</span></div></div></div>`;
   }
   function nav() {
-    const items = [['kshetra', 'map', 'Kshetra'], ['khabar', 'news', 'Khabar'], ['yojana', 'planner', 'Yojana'], ['rishte', 'handshake', 'Rishte'], ['kitab', 'book', 'Kitab']];
+    const items = [['kshetra', 'map', G.S && G.S.stage === 2 ? 'Booth' : 'Kshetra'], ['khabar', 'news', 'Khabar'], ['yojana', 'planner', 'Yojana'], ['rishte', 'handshake', 'Rishte'], ['kitab', 'book', 'Kitab']];
     return `<nav class="nav">${items.map(([id, icon, l]) => id === 'yojana'
       ? `<button class="big ${tab === id ? 'on' : ''}" data-tab="${id}"><span class="bub">${ic(icon)}</span>${l}</button>`
       : `<button class="${tab === id ? 'on' : ''}" data-tab="${id}">${ic(icon)}${l}${id === 'khabar' && G.heatLevel() ? '<span class="dot"></span>' : ''}</button>`).join('')}</nav>`;
@@ -214,6 +219,9 @@
   function home() {
     const S = G.S; if (!S) return splash();
     if (S.stageDone && !S.party) return stageEnd();
+    if (S.stage === 2 && !S.booth) G2.init();
+    if (S.stage === 2 && S.stageDone && !S.s2ack) return UI2.stageEnd();
+    if (S.stage === 2 && tab === 'kshetra') return UI2.boothHome();
     if (tab === 'khabar') return khabar();
     if (tab === 'rishte') return rishte();
     if (tab === 'kitab') return kitab();
@@ -284,9 +292,9 @@
       for (; k < G.samayMax(); k++) html += `<div class="slot ${k >= max ? 'lock' : ''}">${k >= max ? ic('lock', 'sm') : k + 1}</div>`;
       $('#slots', el).innerHTML = html;
       $('#tolas', el).innerHTML = DATA.TOLAS.map(t => `<button class="${t.id === tola ? 'on' : ''}" data-t="${t.id}">${ic(DATA.ISSUE_ICON[t.issue], 'sm')}${t.name} <b>${Math.round(S.jan[t.id])}%</b></button>`).join('');
-      $('#cards', el).innerHTML = DATA.ACTIONS.filter(A => !(A.once && S.cricketDone)).map(A => {
+      $('#cards', el).innerHTML = DATA.ACTIONS.filter(A => (A.st || [1, 2]).includes(S.stage) && !(A.once && S.cricketDone)).map(A => {
         const dis = u + A.slots > max || (A.cost || 0) > S.paisa - spend() || (A.once && plan.some(p => p.id === A.id));
-        const pr = A.id === 'samasya' ? G.openProblem(tola) : null;
+        const pr = A.id === 'samasya' ? G.openProblem(tola) : A.id === 'suchi' && !G2.suchiOpen() ? { name: 'Suchi band ho chuki hai' } : A.id === 'aadesh' && S.booth && S.booth.order ? { name: S.booth.order.t } : null;
         return `<button class="acard ${dis ? 'dis' : ''} ${A.grey ? 'grey' : ''}" data-a="${A.id}" style="--c1:${A.c[0]};--c2:${A.c[1]}">
           <div class="cost">${Array(A.slots).fill('<i></i>').join('')}</div><div class="ai">${ic(A.icon, 'lg')}</div>
           <div class="nm">${A.name}</div><div class="ds">${pr ? pr.name : A.desc}</div>
@@ -344,9 +352,9 @@
     if (out.missionsDone.length) { G.sfx.coin(); confetti(30); }
     on(el, '#nx', 'click', () => {
       const r = G.endTurn();
-      if (r.electionDue) return pollingDay();
+      if (r.electionDue) return G.S.stage === 2 ? UI2.counting(G2.runElection()) : pollingDay();
       tab = 'kshetra'; home();
-      if (r.announce) setTimeout(() => announceElection(), 400);
+      if (r.announce) setTimeout(() => G.S.stage === 2 ? UI2.announce() : announceElection(), 400);
     });
   }
   function announceElection() {
@@ -504,5 +512,6 @@
   });
   document.addEventListener('visibilitychange', () => { if (document.hidden) G.save(); });
 
+  window.UI = { mount, on, overlay, toast, confetti, garland, shell, fxChips, fmt, sgn, $, $$, home, planner, setTab: (t) => { tab = t; } };
   splash();
 })();
