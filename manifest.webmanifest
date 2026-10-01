@@ -1,0 +1,10 @@
+{
+  "name": "Neta: Booth se PM Tak",
+  "short_name": "Neta",
+  "start_url": "./",
+  "display": "fullscreen",
+  "orientation": "portrait",
+  "background_color": "#0d0b1f",
+  "theme_color": "#0d0b1f",
+  "icons": [{ "src": "assets/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }]
+}

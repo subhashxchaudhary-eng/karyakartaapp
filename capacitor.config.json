@@ -1,0 +1,7 @@
+{
+  "appId": "in.neta.boothsepmtak",
+  "appName": "Neta",
+  "webDir": "www",
+  "backgroundColor": "#0d0b1f",
+  "android": { "allowMixedContent": false }
+}
