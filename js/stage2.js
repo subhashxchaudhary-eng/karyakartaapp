@@ -267,6 +267,7 @@ window.G2 = (() => {
     p.pp = wid || null; G.checkMissions({ d: {}, missionsDone: [] }); G.save(); return true;
   }
 
-  return { init, act, weekly, rivalAct, forcedEvents, fx, progress, goals, schedule, runElection, teaser, assign,
+  const stageDone = () => !!(S().booth && S().booth.wardDone);
+  return { stageDone, init, act, weekly, rivalAct, forcedEvents, fx, progress, goals, schedule, runElection, teaser, assign,
     coverage, committee, estimate, pagesOf, assigned, suchiOpen, avgPv, BASELINE, MAX_PAGES_PER_WORKER };
 })();

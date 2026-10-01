@@ -56,4 +56,25 @@ least-covered tola and poaches workers; party orders raise or cut Party Vishwas.
 survive poaching, Ward Panch (optional). Missing +10 triggers one by-election.
 Balance (200 simulated runs each): a player who fills pages reaches +10 about 60% of the time; one who ignores pages gets about 0.
 
-Next: Stage 3 (Gram Pradhan, Gram Sabha mini-game), polling-day booth mini-game.
+## Stage 3: Panchayati Raj (GDD §5)
+| Screen | What it shows | File |
+| --- | --- | --- |
+| Campaign | Pradhan election (2,800 voters, State Election Commission poll, no party symbols) vs Ramdhan ji and an independent | `screens/s3-campaign.png` |
+| Term goals | Pick 4 of the 8 GDD Pradhan goals | `screens/s3-goal-picker.png` |
+| Panchayat home | Term progress (60 months), untied / tied (water-sanitation) funds, own revenue, plan status, next Gram Sabha, project pins on map, project list with repair, term goals, Sachiv / BDO / MLA relationships | `screens/s3-panchayat-home.png` |
+| Build menu | Eleventh Schedule groups with power level (full / BDO sign-off), 12 projects | `screens/s3-build-menu.png` |
+| Project sheet | Hamlet, Quality (break chance), Contractor (honest / connected 10% cut / relative), Credit (self / MLA / Gram Sabha), cost and months incl. BDO delay | `screens/s3-project-sheet.png` |
+| Gram Sabha | 26 Jan, 1 May, 15 Aug, 2 Oct: quorum (mobilise), three villager demands (promise / truth / delay), Ramdhan's heckle, beneficiary list (fair / vote bank), vote on the GPDP | `screens/s3-gram-sabha.png`, `s3-sabha-result.png` |
+| Rotation | Article 243D seat reservation: back Sitara, field family ("Pradhan-pati"), or move up | `screens/s3-rotation.png` |
+| Member contest | Block Pramukh (80 BDC members) and Zila Panchayat Adhyaksh (60): member dots, offers by demand (vikas promise, post, cash = Heat, old favour), rival buying and poaching, final-week resort | `screens/s3-member-game.png`, `s3-mg-count.png` |
+
+Rules: monthly turns while governing; April transfers (Union FC grant half tied, SFC share boosted by lobbying, own revenue);
+Sachiv can stall payments; shared-power works wait 2 months unless BDO relationship ≥ 20; low-quality works can wash away each
+monsoon (viral headline); unkept Gram Sabha promises cost support after 4 months; anti-incumbency drift; diminishing support gains.
+Threats: no-confidence motion (support < 38%), DM freezes financial powers (Heat ≥ 50), social audit (fails after connected
+contractors / fake muster rolls), floods, drought, pond-lease dispute, MLA credit grab, nepotism leak. Losing an election costs 5 years.
+Favours (Ehsaan) come from Janta Darbar and fade 30% a year. Zila is hardest when the state is ruled by the other party.
+
+Balance (150 simulated careers): careful play wins Pradhan ~80% first try, Block ~97%, Zila ~77%; random play ~55%, ~15%, ~15%.
+
+Not yet built: Block / Zila governance terms (their goals), Stage 4.

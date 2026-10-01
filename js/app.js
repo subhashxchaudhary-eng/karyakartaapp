@@ -202,7 +202,7 @@
       <div class="ticker"><b>${ic('tv', 'sm')}KHABAR</b><div class="tk"><span>${ticker}</span></div></div></div>`;
   }
   function nav() {
-    const items = [['kshetra', 'map', G.S && G.S.stage === 2 ? 'Booth' : 'Kshetra'], ['khabar', 'news', 'Khabar'], ['yojana', 'planner', 'Yojana'], ['rishte', 'handshake', 'Rishte'], ['kitab', 'book', 'Kitab']];
+    const items = [['kshetra', 'map', G.S && G.S.stage === 2 ? 'Booth' : G.S && G.S.stage === 3 ? 'Panchayat' : 'Kshetra'], ['khabar', 'news', 'Khabar'], ['yojana', 'planner', 'Yojana'], ['rishte', 'handshake', 'Rishte'], ['kitab', 'book', 'Kitab']];
     return `<nav class="nav">${items.map(([id, icon, l]) => id === 'yojana'
       ? `<button class="big ${tab === id ? 'on' : ''}" data-tab="${id}"><span class="bub">${ic(icon)}</span>${l}</button>`
       : `<button class="${tab === id ? 'on' : ''}" data-tab="${id}">${ic(icon)}${l}${id === 'khabar' && G.heatLevel() ? '<span class="dot"></span>' : ''}</button>`).join('')}</nav>`;
@@ -218,10 +218,14 @@
   // ================= HOME =================
   function home() {
     const S = G.S; if (!S) return splash();
+    if (S.age >= 85) return retirement();
     if (S.stageDone && !S.party) return stageEnd();
     if (S.stage === 2 && !S.booth) G2.init();
     if (S.stage === 2 && S.stageDone && !S.s2ack) return UI2.stageEnd();
     if (S.stage === 2 && tab === 'kshetra') return UI2.boothHome();
+    if (S.stage === 3 && !S.p) G3.init();
+    if (S.stage === 3 && S.stageDone && !S.s3ack) return UI3.stageEnd();
+    if (S.stage === 3 && tab === 'kshetra') return UI3.home();
     if (tab === 'khabar') return khabar();
     if (tab === 'rishte') return rishte();
     if (tab === 'kitab') return kitab();
@@ -292,7 +296,7 @@
       for (; k < G.samayMax(); k++) html += `<div class="slot ${k >= max ? 'lock' : ''}">${k >= max ? ic('lock', 'sm') : k + 1}</div>`;
       $('#slots', el).innerHTML = html;
       $('#tolas', el).innerHTML = DATA.TOLAS.map(t => `<button class="${t.id === tola ? 'on' : ''}" data-t="${t.id}">${ic(DATA.ISSUE_ICON[t.issue], 'sm')}${t.name} <b>${Math.round(S.jan[t.id])}%</b></button>`).join('');
-      $('#cards', el).innerHTML = DATA.ACTIONS.filter(A => (A.st || [1, 2]).includes(S.stage) && !(A.once && S.cricketDone)).map(A => {
+      $('#cards', el).innerHTML = DATA.ACTIONS.filter(A => (A.st || [1, 2, 3]).includes(S.stage) && !(A.once && S.cricketDone)).map(A => {
         const dis = u + A.slots > max || (A.cost || 0) > S.paisa - spend() || (A.once && plan.some(p => p.id === A.id));
         const pr = A.id === 'samasya' ? G.openProblem(tola) : A.id === 'suchi' && !G2.suchiOpen() ? { name: 'Suchi band ho chuki hai' } : A.id === 'aadesh' && S.booth && S.booth.order ? { name: S.booth.order.t } : null;
         return `<button class="acard ${dis ? 'dis' : ''} ${A.grey ? 'grey' : ''}" data-a="${A.id}" style="--c1:${A.c[0]};--c2:${A.c[1]}">
@@ -352,9 +356,9 @@
     if (out.missionsDone.length) { G.sfx.coin(); confetti(30); }
     on(el, '#nx', 'click', () => {
       const r = G.endTurn();
-      if (r.electionDue) return G.S.stage === 2 ? UI2.counting(G2.runElection()) : pollingDay();
+      if (r.electionDue) return G.S.stage === 3 ? UI2.counting(G3.runElection()) : G.S.stage === 2 ? UI2.counting(G2.runElection()) : pollingDay();
       tab = 'kshetra'; home();
-      if (r.announce) setTimeout(() => G.S.stage === 2 ? UI2.announce() : announceElection(), 400);
+      if (r.announce) setTimeout(() => G.S.stage === 3 ? UI3.onAnnounce(r.announce) : G.S.stage === 2 ? UI2.announce() : announceElection(), 400);
     });
   }
   function announceElection() {
@@ -445,6 +449,19 @@
         <button class="btn block mt16" id="ok">Career book dekho</button></div>`);
       on(o, '#ok', 'click', () => { o.remove(); tab = 'kitab'; home(); });
     });
+  }
+
+  // ================= RETIREMENT (age clock, GDD section 13) =================
+  function retirement() {
+    const S = G.S; G.sfx.sting();
+    const el = mount(`<div class="scroll"><div class="center mt24"><div class="eyebrow">Rajneetik sanyas</div><div class="h1 mt8">85 saal ki <span class="gold-text">yatra</span></div>
+      <div class="small muted mt8">Umar ki ghadi ruk gayi. Har haar ne 5 saal liye. ${S.name} ka safar ${DATA.RANKS[S.rank]} pe thama.</div></div>
+      <div class="statgrid mt16"><div class="stat"><div class="k">${ic('crown', 'sm')}Sabse ooncha pad</div><div class="v" style="font-size:16px">${DATA.RANKS[S.rank]}</div></div><div class="stat"><div class="k">${ic('trophy', 'sm')}Chunav jeete</div><div class="v">${S.electionsWon}</div></div>
+        <div class="stat"><div class="k">${ic('flower', 'sm')}Maala</div><div class="v">${S.maala}</div></div><div class="stat"><div class="k">${ic('news', 'sm')}Surkhiyaan</div><div class="v">${S.headlines.length}</div></div></div>
+      <div class="paper clip mt16"><div class="src">Gaon Ki Awaaz · Antim surkhi</div><div class="t">${S.name} ne liya rajneetik sanyas; gaon ne kaha "neta ho to aisa"</div></div></div>
+      <div class="foot col"><button class="btn block" id="nw">${ic('flag')} Naya safar</button><button class="btn ghost block" id="kb">${ic('book')} Career book</button></div>`);
+    on(el, '#nw', 'click', () => { G.wipe(); prologue(); });
+    on(el, '#kb', 'click', () => { tab = 'kitab'; kitab(); });
   }
 
   // ================= KHABAR =================

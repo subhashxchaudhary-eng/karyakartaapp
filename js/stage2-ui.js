@@ -75,7 +75,7 @@ window.UI2 = (() => {
     on(o, '#ok', 'click', () => { o.remove(); UI.home(); });
   }
 
-  const faceOf = (c) => c.face === 'player' ? ART.face({ id: 'player', col: '#ffb627', f: S().gender === 'f' }, 50)
+  const faceOf = (c) => DATA.PEOPLE.find(x => x.id === c.face && c.face !== 'bunty') ? ART.face(DATA.PEOPLE.find(x => x.id === c.face), 50) : c.face === 'player' ? ART.face({ id: 'player', col: '#ffb627', f: S().gender === 'f' }, 50)
     : c.face === 'bunty' ? ART.face(DATA.PEOPLE[0], 50)
     : c.face === 'party' ? `<div style="width:100%;height:100%;display:grid;place-items:center;background:${c.col};color:#fff">${ic('flag', 'lg')}</div>`
     : `<div style="width:100%;height:100%;display:grid;place-items:center;color:var(--text-3)">${ic('x', 'lg')}</div>`;
@@ -102,7 +102,7 @@ window.UI2 = (() => {
       el.querySelector('#rnd').textContent = 'Antim parinaam';
       const f = el.querySelector('#final');
       if (res.kind === 'assembly') f.innerHTML = `<div class="bigmsg ${res.won ? 'gold-text' : ''}" style="${res.won ? '' : 'color:#ff8b8b'}">${res.lift >= 0 ? '+' : ''}${res.lift.toFixed(1)}</div><div class="center muted mt8">Booth pe party vote ${res.share.toFixed(1)}% (pichhla ${G2.BASELINE}%). ${res.won ? 'Lakshya poora!' : 'Lakshya se chooke.'} ${res.partyWon ? 'Booth pe party aage rahi.' : 'Booth pe party peeche rahi.'}</div>`;
-      else f.innerHTML = res.won ? `<div class="bigmsg gold-text">WARD PANCH!</div><div class="center muted mt8">${res.totals[0] - res.totals[1]} vote se jeet. Pehla nirvachit pad.</div>` : `<div class="bigmsg" style="color:#ff8b8b">HAAR GAYE</div><div class="center muted mt8">Bunty ${res.totals[1] - res.totals[0]} vote se aage. Booth abhi bhi aapka hai.</div>`;
+      else f.innerHTML = res.won ? `<div class="bigmsg gold-text">${res.winTitle || 'WARD PANCH!'}</div><div class="center muted mt8">${res.winSub || `${res.totals[0] - res.totals[1]} vote se jeet. Pehla nirvachit pad.`}</div>` : `<div class="bigmsg" style="color:#ff8b8b">HAAR GAYE</div><div class="center muted mt8">${res.loseSub || `Bunty ${res.totals[1] - res.totals[0]} vote se aage. Booth abhi bhi aapka hai.`}</div>`;
       if (res.won) { G.sfx.win(); confetti(110); garland(); } else G.sfx.lose();
       el.querySelector('#nx').disabled = false;
     };
@@ -128,10 +128,10 @@ window.UI2 = (() => {
       <div class="small muted mt8">${panch ? 'Booth bhi aapka, ward bhi aapka. Ab gaon Pradhan ki kursi ki taraf dekh raha hai.' : 'Booth ka kaam laajawaab raha, par ward haath se gaya. Pradhan ka raasta ab bhi khula hai.'}</div></div>
       <div class="statgrid mt16"><div class="stat"><div class="k">${ic('ballot', 'sm')}Booth lift</div><div class="v">${s.booth.lift >= 0 ? '+' : ''}${s.booth.lift.toFixed(1)}</div></div><div class="stat"><div class="k">${ic('book', 'sm')}Naye matdata</div><div class="v">${s.booth.enrolled}</div></div>
         <div class="stat"><div class="k">${ic('flag', 'sm')}Aadesh poore</div><div class="v">${s.booth.ordersDone}</div></div><div class="stat"><div class="k">${ic('flower', 'sm')}Maala</div><div class="v">${s.maala}</div></div></div>
-      <div class="hook mt16"><div class="eyebrow" style="color:var(--pink)">${ic('alert', 'sm')} Aage...</div><div class="q">"Stage 3: Gram Pradhan. Panchayat ka paisa, Gram Sabha, aur Bunty ke chacha ki kursi." Agle update mein.</div></div>
-      </div><div class="foot col"><button class="btn block" id="kb">${ic('book')} Career book</button><button class="btn ghost block" id="bh">${ic('map')} Booth pe kaam jaari rakho</button></div>`);
+      <div class="hook mt16"><div class="eyebrow" style="color:var(--pink)">${ic('alert', 'sm')} Aage...</div><div class="q">"Stage 3: Gram Pradhan. Panchayat ka paisa, Gram Sabha, aur Bunty ke chacha ki kursi."</div></div>
+      </div><div class="foot col"><button class="btn green block pulse" id="s3">${ic('flag')} Stage 3: Panchayat shuru karo</button><button class="btn ghost block" id="kb">${ic('book')} Career book</button></div>`);
     const ack = (t) => { s.s2ack = true; G.save(); UI.setTab(t); UI.home(); };
-    on(el, '#kb', 'click', () => ack('kitab')); on(el, '#bh', 'click', () => ack('kshetra'));
+    on(el, '#kb', 'click', () => ack('kitab')); on(el, '#s3', 'click', () => { s.s2ack = true; G3.init(); G.sfx.dhol(); UI.setTab('kshetra'); UI.home(); setTimeout(() => UI3.intro(), 400); });
   }
 
   return { boothHome, pageSheet, announce, counting, breakdown, stageEnd };

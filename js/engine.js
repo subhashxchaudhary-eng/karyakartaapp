@@ -8,6 +8,7 @@ window.G = (() => {
   const ELECTION_ANNOUNCE = 3, ELECTION_LEN = 5;
 
   let S = null;
+  const mod = () => !S ? null : S.stage === 2 ? window.G2 : S.stage === 3 ? window.G3 : null;
   const settings = Object.assign({ sound: true, haptics: true }, safeGet(SET_KEY) || {});
 
   function safeGet(k) { try { return JSON.parse(localStorage.getItem(k)); } catch { return null; } }
@@ -41,7 +42,8 @@ window.G = (() => {
 
   // ---------- derived ----------
   const avgJan = () => Math.round(DATA.TOLAS.reduce((a, t) => a + S.jan[t.id] * t.size, 0) / DATA.TOLAS.reduce((a, t) => a + t.size, 0));
-  const dateLabel = () => { const m = Math.min(11, Math.floor((S.week - 1) / 4.35)); return `${MONTHS[m]} ${S.year}`; };
+  const month = () => Math.min(11, Math.floor((S.week - 1) / 4.345));
+  const dateLabel = () => { const m = month(); return `${MONTHS[m]} ${S.year}`; };
   const heatLevel = () => S.heat < 25 ? 0 : S.heat < 50 ? 1 : S.heat < 75 ? 2 : 3;
   const heatHint = () => ['Sab shaant hai.', 'Ek patrakar tumhare baare mein pooch raha tha...', 'Block office mein tumhari file khuli hai.', 'Thane ka munshi keh raha tha: "Sambhal ke."'][heatLevel()];
   const samayMax = () => S.samayMax + (S.aides.includes('pa') ? 1 : 0);
@@ -50,12 +52,12 @@ window.G = (() => {
   function fillMissions() {
     if (S.election && !(S.missions[1] && S.missions[1].elec)) {
       if (S.missions[1] && !S.missions[1].done) S.stash = S.missions[1];
-      S.missions[1] = { id: 'elec', elec: true, t: S.stage === 2 ? `${S.election.name}: booth sambhalo` : 'School Committee chunav jeeto', k: 'elec', n: 1, p: 0, rw: { maala: 1 } };
+      S.missions[1] = { id: 'elec', elec: true, t: S.stage >= 2 ? (S.election.mission || `${S.election.name}: booth sambhalo`) : 'School Committee chunav jeeto', k: 'elec', n: 1, p: 0, rw: { maala: 1 } };
     }
     if (!S.election && S.missions[1] && S.missions[1].elec) { S.missions[1] = S.stash || null; S.stash = null; }
     for (let slot = 0; slot < 3; slot++) {
       if (S.missions[slot] && !S.missions[slot].done) continue;
-      const pool = (S.stage === 2 ? DATA.MISSION_POOL2 : DATA.MISSION_POOL)[slot].filter(m => !(S.missions[slot] && S.missions[slot].id === m.id) && !S.seen.includes('mis:' + m.id));
+      const pool = (S.stage === 3 ? DATA.MISSION_POOL3 : S.stage === 2 ? DATA.MISSION_POOL2 : DATA.MISSION_POOL)[slot].filter(m => !(S.missions[slot] && S.missions[slot].id === m.id) && !S.seen.includes('mis:' + m.id));
       const m = pool.length ? pick(pool) : null;
       S.missions[slot] = m ? { ...m, p: 0, done: false, base: slot === 0 ? 0 : undefined } : null;
       if (m && slot > 0) S.seen.push('mis:' + m.id);
@@ -67,8 +69,8 @@ window.G = (() => {
     if (m.k === 'members') return S.members;
     if (m.k === 'solved') return S.solved;
     if (m.k === 'vishwas') return S.vishwas;
-    if (m.k === 'elec') return S.stage === 2 ? 0 : (S.electionsWon ? 1 : 0);
-    if (window.G2 && S.booth) { const v = G2.progress(m.k); if (v != null) return v; }
+    if (m.k === 'elec') return S.stage >= 2 ? 0 : (S.electionsWon ? 1 : 0);
+    { const M = mod(); if (M) { const v = M.progress(m.k); if (v != null) return v; } }
     return 0;
   }
   function checkMissions(out) {
@@ -81,11 +83,11 @@ window.G = (() => {
         out.missionsDone.push(m.t);
       }
     });
-    if (stageGoals().every(g => g.ok || g.opt)) S.stageDone = S.stage === 2 ? !!(S.booth && S.booth.wardDone) : true;
+    if (stageGoals().every(g => g.ok || g.opt)) S.stageDone = mod() ? mod().stageDone() : true;
   }
   // Stage 1 checklist (GDD section 4)
   function stageGoals() {
-    if (S.stage === 2 && window.G2) return G2.goals();
+    if (mod()) return mod().goals();
     return [
       { t: 'Yuva Mandal banao', ok: true },
       { t: '15 sadasya tak badhao', ok: S.members >= 15, p: `${Math.min(S.members, 15)}/15` },
@@ -102,7 +104,7 @@ window.G = (() => {
     const d = out.d || (out.d = {});
     const add = (k, v) => d[k] = (d[k] || 0) + v;
     if (fx.paisa) { S.paisa = Math.max(0, S.paisa + fx.paisa); add('Paisa', fx.paisa); }
-    if (fx.kaala) { S.kaala += fx.kaala; add('Kaala Paisa', fx.kaala); }
+    if (fx.kaala) { S.kaala = Math.max(0, S.kaala + fx.kaala); add('Kaala Paisa', fx.kaala); }
     if (fx.heat) { S.heat = clamp(S.heat + fx.heat); add('Heat', fx.heat); }
     if (fx.josh) { S.josh = clamp(S.josh + fx.josh); add('Josh', fx.josh); }
     if (fx.members) { S.members = Math.max(1, S.members + fx.members); add('Sadasya', fx.members); }
@@ -111,8 +113,10 @@ window.G = (() => {
     if (fx.grudge) S.grudge = clamp(S.grudge + fx.grudge);
     if (fx.samay) out.samayDelta = (out.samayDelta || 0) + fx.samay;
     ['vikas', 'sevak', 'dabang', 'imaan'].forEach(k => { if (fx[k]) { S.chhavi[k] = clamp(S.chhavi[k] + fx[k]); add(CHHAVI_NAME[k], fx[k]); } });
-    if (fx.janAll) { DATA.TOLAS.forEach(t => S.jan[t.id] = clamp(S.jan[t.id] + fx.janAll)); add('Jan Samarthan', fx.janAll); }
-    if (fx.jan) Object.entries(fx.jan).forEach(([t, v]) => { S.jan[t] = clamp(S.jan[t] + v); add('Jan Samarthan', Math.round(v * tolaWeight(t))); });
+    // from Stage 3 on, satisfied voters are harder to win further (diminishing gains)
+    const gain = (t, v) => v > 0 && S.stage >= 3 ? v * Math.max(.15, 1 - S.jan[t] / 105) : v;
+    if (fx.janAll) { DATA.TOLAS.forEach(t => S.jan[t.id] = clamp(S.jan[t.id] + gain(t.id, fx.janAll))); add('Jan Samarthan', fx.janAll); }
+    if (fx.jan) Object.entries(fx.jan).forEach(([t, v]) => { S.jan[t] = clamp(S.jan[t] + gain(t, v)); add('Jan Samarthan', Math.round(v * tolaWeight(t))); });
     if (fx.rishte) Object.entries(fx.rishte).forEach(([p, v]) => S.rishte[p] = clamp(S.rishte[p] + v, -100, 100));
     if (fx.solve) solveProblem(fx.solve, out);
     if (fx.seed) S.seeds.push({ id: fx.seed, at: S.turn + 2 });
@@ -159,15 +163,15 @@ window.G = (() => {
         case 'chanda': apply({ paisa: Math.round(rnd(800, 1600) + S.jan.bazaar * 15) }, out); break;
         case 'jaasoos': S.intel = rivalPlan(); out.notes.push(`Khabar mili: Bunty agle hafte ${tolaName(S.intel.tola)} mein ${S.intel.what}.`); break;
         case 'cricket': S.cricketDone = true; apply({ janAll: 6, josh: 10, members: 3, maala: 2 }, out); addHeadline('Gaon Ki Awaaz', 'Yuva Mandal Cup: 8 teamein, poora gaon maidan mein'); break;
-        default: if (window.G2) G2.act(a, out, jb); break;
+        default: if (mod()) mod().act(a, out, jb); break;
         case 'parcha': DATA.TOLAS.forEach(t => S.rival[t.id] = clamp(S.rival[t.id] - 3)); apply({ heat: 8, imaan: -4, grudge: 15 }, out); break;
       }
     });
     // monthly upkeep & chanda trickle
     apply({ paisa: Math.round(S.members * 40 - 300) }, out);
     // rival bot acts
-    out.rival = S.stage === 2 && window.G2 ? G2.rivalAct(out) : rivalAct();
-    if (S.stage === 2 && window.G2) G2.weekly(out);
+    out.rival = mod() ? mod().rivalAct(out) : rivalAct();
+    if (mod()) mod().weekly(out);
     // natural decay
     S.josh = clamp(S.josh - 2); S.heat = clamp(S.heat - 1);
     checkMissions(out);
@@ -198,7 +202,7 @@ window.G = (() => {
     S.seeds = S.seeds.filter(s => s.at > S.turn);
     const out = due.map(s => DATA.EVENTS.find(e => e.id === s.id)).filter(Boolean);
     const n = out.length ? 1 : (Math.random() < .45 ? 2 : 1);
-    const stOk = (e) => (e.stage || [1]).includes(S.stage);
+    const stOk = (e) => (e.stage || [1]).includes(S.stage) && !(e.govern && !(S.p && S.p.phase === 'govern'));
     let pool = DATA.EVENTS.filter(e => stOk(e) && !(e.onceEver && (S.once || []).includes(e.id)) && !e.seedOnly && !e.forced && !S.seen.includes('ev:' + e.id));
     if (!S.election) pool = pool.filter(e => e.id !== 'rivalpoll');
     if (!pool.length) { S.seen = S.seen.filter(x => !x.startsWith('ev:')); pool = DATA.EVENTS.filter(e => stOk(e) && !(e.onceEver && (S.once || []).includes(e.id)) && !e.seedOnly && !e.forced && e.id !== 'rivalpoll'); }
@@ -209,13 +213,13 @@ window.G = (() => {
       while (r > w[k]) { r -= w[k]; k++; }
       const e = pool.splice(k, 1)[0]; out.push(e); S.seen.push('ev:' + e.id); if (e.onceEver) (S.once || (S.once = [])).push(e.id);
     }
-    if (S.stage === 2 && window.G2) out.push(...G2.forcedEvents());
+    if (mod()) out.push(...mod().forcedEvents());
     if (S.stage === 1 && S.election && S.election.left === 3 && !S.seen.includes('ev:rivalpoll')) { out.push(DATA.EVENTS.find(e => e.id === 'rivalpoll')); S.seen.push('ev:rivalpoll'); }
     return out;
   }
   function chooseEvent(ev, i) {
     const c = ev.choices[i]; const out = apply(c.fx, { d: {}, notes: [] });
-    if (window.G2 && S.booth) G2.fx(c.fx, out);
+    if (mod()) mod().fx(c.fx, out);
     if (c.head) addHeadline('Gaon Ki Awaaz', c.head);
     if (c.seed) S.seeds.push({ id: c.seed, at: S.turn + 2 });
     if (out.samayDelta) S.samayDebt = (S.samayDebt || 0) - out.samayDelta;
@@ -225,10 +229,10 @@ window.G = (() => {
 
   // ---------- end turn ----------
   function endTurn() {
-    S.turn++; S.week++; if (S.week > 52) { S.week = 1; S.year++; S.age++; }
+    S.turn++; S.week += S.monthly ? 4.345 : 1; if (S.week >= 53) { S.week -= 52; S.year++; S.age++; }
     S.counters = Object.fromEntries(Object.entries(S.counters).filter(([k]) => !k.startsWith('act:')));
     let announce = false;
-    if (S.stage === 2 && window.G2) announce = G2.schedule();
+    if (mod()) announce = mod().schedule();
     else if (!S.election && !S.electionsWon && S.turn >= (S.nextElection || ELECTION_ANNOUNCE)) {
       S.election = { left: ELECTION_LEN, name: 'School Management Committee', spend: 0 }; announce = true;
       addHeadline('Gaon Ki Awaaz', `School committee chunav ka elaan: ${S.name} banaam Bunty Bhaiya`);
@@ -238,7 +242,7 @@ window.G = (() => {
     return { announce, electionDue: S.election && S.election.left <= 0 };
   }
   function teaser() {
-    if (S.stage === 2 && window.G2) { const t = G2.teaser(); if (t) return t; }
+    if (mod()) { const t = mod().teaser(); if (t) return t; }
     if (S.election && S.election.left === 1) return 'Kal matdaan hai. Bunty ki team raat bhar ghoom rahi hai...';
     if (S.seeds.length) return 'Woh purana maamla... abhi khatam nahi hua.';
     if (S.intel) return `Tumhe pata hai: Bunty ${tolaName(S.intel.tola)} mein ${S.intel.what}.`;
@@ -332,6 +336,6 @@ window.G = (() => {
   return {
     get S() { return S; }, settings, saveSettings, newGame, load, save, wipe, sfx, buzz,
     avgJan, dateLabel, heatLevel, heatHint, samayMax, resolveTurn, drawEvents, chooseEvent, endTurn, teaser,
-    runElection, openProblem, stageGoals, apply, addHeadline, fillMissions, checkMissions, rnd, pick, MONTHS, missionProgress, chooseParty, tolaName, CHHAVI_NAME, clamp,
+    runElection, openProblem, stageGoals, apply, addHeadline, fillMissions, checkMissions, rnd, pick, MONTHS, month, rivalAct, solveProblem: (id) => solveProblem(id, { notes: [] }), missionProgress, chooseParty, tolaName, CHHAVI_NAME, clamp,
   };
 })();
